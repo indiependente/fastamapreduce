@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -22,7 +24,7 @@ import driver.ConfigurationLoader;
 public class HdfsLoader 
 {
 	public static final String DELIMITER = "$$$";
-	public static String OUTPUT_NAME = "BIGFILE";
+	public static String INPUT_NAME = "BIGFILE";
 	public static String CHAR_TO_REPLACE = "%";
 
 	private Map<String, Integer> checksums;
@@ -36,18 +38,21 @@ public class HdfsLoader
 	private FSDataOutputStream out;
 	private Path toHdfs;
 
-	public HdfsLoader(String inputDirPath)
+	public HdfsLoader(Configuration config, String inputDirPath)
 	{
-		toHdfs = new Path(OUTPUT_NAME);
-		ConfigurationLoader loader = ConfigurationLoader.getInstance();
+		toHdfs = new Path(INPUT_NAME);
+
+		System.out.println(INPUT_NAME);
 		try 
 		{
-			fs = FileSystem.get(loader.getConfiguration());
+			fs = FileSystem.get(config);
+			System.out.println(fs.getHomeDirectory());
 		} catch (IOException e) {
 			logger.fatal("Fatal error: Cannot get the FileSystem from Hadoop configuration");
 			System.exit(-1);
 		}
-
+		checksums = new HashMap<String, Integer>();
+		coupleMap = new HashMap<Integer, SimpleEntry<String,String>>();
 		processInput(inputDirPath);
 	}
 
@@ -55,7 +60,7 @@ public class HdfsLoader
 
 		File folder = new File(inputDirPath);
 		File[] listOfFiles = folder.listFiles();
-		File output = new File(OUTPUT_NAME);
+		File output = new File(INPUT_NAME);
 		PrintWriter writer = null;
 		String f1Content = null;
 		String f1NameFile = null;
@@ -69,15 +74,15 @@ public class HdfsLoader
 		} 
 		catch (FileNotFoundException e1) 
 		{
-			logger.fatal("Fatal error: Cannot create file " + OUTPUT_NAME);
+			logger.fatal("Fatal error: Cannot create file " + INPUT_NAME);
 			System.exit(-1);
 		}
 
-		for(int i=0; i<listOfFiles.length; i++)
+		for(int i=0; i<listOfFiles.length-1; i++)
 		{
 			try 
 			{
-				f1Content = FileUtils.readFileToString(listOfFiles[i]).replaceAll("\n", CHAR_TO_REPLACE);;
+				f1Content = FileUtils.readFileToString(listOfFiles[i]).replaceAll("\r", "").replaceAll("\n", CHAR_TO_REPLACE);
 				f1NameFile = listOfFiles[i].getName();
 			} 
 			catch (IOException e) {
@@ -92,9 +97,9 @@ public class HdfsLoader
 			for(int j=i+1; j<listOfFiles.length; j++){
 				try 
 				{
-					f2Content = FileUtils.readFileToString(listOfFiles[j]).replaceAll("\n", CHAR_TO_REPLACE);;
+					f2Content = FileUtils.readFileToString(listOfFiles[j]).replaceAll("\n", CHAR_TO_REPLACE).replaceAll("\r", "");
 					writer.print(f1Content + DELIMITER + f2Content + "\n");
-					coupleMap.put(lineNo, new SimpleEntry<String, String>(f1.getName(), f2.getName()) );
+					coupleMap.put(lineNo, new SimpleEntry<String, String>(f1NameFile, listOfFiles[j].getName()) );
 					lineNo++;
 				}
 				catch (IOException e) {

@@ -7,9 +7,9 @@ public class ConfigurationLoader {
 
 	public static final String BLOCK_SIZE = "dfs.blocksize";
 	
-	public static final String HADOOP_HOME = "/";
+	public static final String HADOOP_HOME = "/usr/local/hadoop/etc/hadoop/";
 	
-	private static final String[] configFilesToLoad = { "core-site.xml", "hdfs-site.xml" };
+	private static final String[] configFilesToLoad = { "core-site.xml", "hdfs-site.xml", "mapred-site.xml", "yarn-site.xml" };
 	
 	private Configuration conf;
 	

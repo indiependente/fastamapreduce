@@ -2,6 +2,8 @@ package driver;
 
 import org.apache.hadoop.util.ProgramDriver;
 
+import simple.FastaSimpleJob;
+
 public class Driver {
 
 	public static void main(String[] args)
@@ -10,7 +12,7 @@ public class Driver {
 		try 
 		{
 			ProgramDriver driver = new ProgramDriver();
-			
+			driver.addClass("simple", FastaSimpleJob.class, "shit");
 			returnCode = driver.run(args);
 		}
 		catch (Throwable e) 

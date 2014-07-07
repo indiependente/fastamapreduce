@@ -29,9 +29,16 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 	protected void setup(Context context) throws IOException, InterruptedException 
 	{
 		super.setup(context);
+		/*
 		URI[] cachedFiles = context.getCacheFiles();
 		
+		for (URI u : cachedFiles)
+			System.out.println("-> " + u.getPath());
 		fastaPath = cachedFiles[0].getPath();
+		
+		*/
+		
+		fastaPath = "fasta36";
 		
 	}
 
@@ -69,14 +76,24 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		ProcessBuilder runner = null;
 		List<String> arguments = new ArrayList<String>();
 		String[] w = {"", ""};
+		String[] paths = new String[w.length];
+		logger.info("starting...");
 		try 
 		{
 			arguments.add(fastaPath);
 			arguments.add("-q");
 			
 			String line = value.toString();
+			if (line == null || line.length() <= 0)
+				return;
+			logger.info(line);
 			w = line.split(HdfsLoader.DELIMITER);
-			String[] paths = new String[w.length];
+			
+			if (w.length != 2)
+			{
+				logger.info("problems here");
+				return;
+			}
 			
 			paths[0] = writeToFile("reference", w[0].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
 			paths[1] = writeToFile("query", w[1].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
@@ -86,7 +103,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			
 			runner = new ProcessBuilder(arguments);
 			runner.redirectErrorStream(true);
-			
+			logger.info("running...");
 			Process p = runner.start();
 			
 			InputStream stdin = p.getInputStream();
@@ -98,6 +115,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			while ((line = buffer.readLine()) != null) 
 			{
 				builder.append(line + "\n");
+				logger.info(line);
 			}
 			
 			p.waitFor(); // it retuns the exit value..
@@ -108,8 +126,12 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			e.printStackTrace();
 		}
 		
-		context.write(new IntWritable(w[0].hashCode()), new Text(builder.toString()));
-		context.write(new IntWritable(w[1].hashCode()), new Text(builder.toString()));
+		Text result = new Text(builder.toString());
+		context.write(new IntWritable(w[0].hashCode()), result);
+		context.write(new IntWritable(w[1].hashCode()), result);
+		
+		for (String s : paths)
+			(new File(s)).deleteOnExit();
 
 	}
 	
