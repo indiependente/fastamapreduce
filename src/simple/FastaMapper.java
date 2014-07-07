@@ -68,17 +68,18 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		StringBuilder builder = new StringBuilder("");
 		ProcessBuilder runner = null;
 		List<String> arguments = new ArrayList<String>();
+		String[] w = {"", ""};
 		try 
 		{
 			arguments.add(fastaPath);
 			arguments.add("-q");
 			
 			String line = value.toString();
-			String[] w = line.split(HdfsLoader.DELIMITER);
+			w = line.split(HdfsLoader.DELIMITER);
 			String[] paths = new String[w.length];
 			
-			paths[0] = writeToFile("reference", w[0]);
-			paths[1] = writeToFile("query", w[1]);
+			paths[0] = writeToFile("reference", w[0].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
+			paths[1] = writeToFile("query", w[1].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
 	
 			for (String s : paths)
 				arguments.add(s);
@@ -107,8 +108,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			e.printStackTrace();
 		}
 		
-		context.write(new IntWritable(0), new Text(builder.toString()));
-		context.write(new IntWritable(1), new Text(builder.toString()));
+		context.write(new IntWritable(w[0].hashCode()), new Text(builder.toString()));
+		context.write(new IntWritable(w[1].hashCode()), new Text(builder.toString()));
 
 	}
 	

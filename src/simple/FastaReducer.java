@@ -18,6 +18,6 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 			res.append("\n\n");
 		}
 		
-		context.write(new Text("1"), new Text(res.toString()));
+		context.write(new Text(context.getConfiguration().get("" + key.get())), new Text(res.toString()));
 	}
 }

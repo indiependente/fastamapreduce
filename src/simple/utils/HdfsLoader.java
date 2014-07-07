@@ -12,7 +12,6 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -23,11 +22,11 @@ import driver.ConfigurationLoader;
 public class HdfsLoader 
 {
 	public static final String DELIMITER = "$$$";
-	private static String OUTPUT_NAME = "BIGFILE";
-	private static String CHAR_TO_REPLACE = "%";
+	public static String OUTPUT_NAME = "BIGFILE";
+	public static String CHAR_TO_REPLACE = "%";
 
 	private Map<String, Integer> checksums;
-	private Map<Integer, String> inverseChecksums;
+//	private Map<Integer, String> inverseChecksums;
 	private Map<Integer, SimpleEntry<String,String>> coupleMap;
 	private static Log logger = LogFactory.getLog(HdfsLoader.class);
 	private int lineNo = 0;
@@ -78,7 +77,7 @@ public class HdfsLoader
 		{
 			try 
 			{
-				f1Content = FileUtils.readFileToString(listOfFiles[i]).replace("\n", CHAR_TO_REPLACE);;
+				f1Content = FileUtils.readFileToString(listOfFiles[i]).replaceAll("\n", CHAR_TO_REPLACE);;
 				f1NameFile = listOfFiles[i].getName();
 			} 
 			catch (IOException e) {
@@ -88,12 +87,12 @@ public class HdfsLoader
 			}
 
 			checksums.put(f1NameFile, getHash(f1Content));
-			inverseChecksums.put(getHash(f1Content), f1NameFile);
+//			inverseChecksums.put(getHash(f1Content), f1NameFile);
 
 			for(int j=i+1; j<listOfFiles.length; j++){
 				try 
 				{
-					f2Content = FileUtils.readFileToString(listOfFiles[j]).replace("\n", CHAR_TO_REPLACE);;
+					f2Content = FileUtils.readFileToString(listOfFiles[j]).replaceAll("\n", CHAR_TO_REPLACE);;
 					writer.print(f1Content + DELIMITER + f2Content + "\n");
 					coupleMap.put(lineNo, new SimpleEntry<String, String>(f1.getName(), f2.getName()) );
 					lineNo++;
@@ -125,9 +124,9 @@ public class HdfsLoader
 		return checksums.get(file);
 	}
 
-	public String getFileNameFromHash(String hash){
-		return inverseChecksums.get(hash);
-	}
+//	public String getFileNameFromHash(String hash){
+//		return inverseChecksums.get(hash);
+//	}
 
 	/**
 	 * Return the file's names of the couple at the row number @param row
@@ -175,7 +174,7 @@ public class HdfsLoader
 		}
 	}
 	
-	public Map<String, Object> getChecksums()
+	public Map<String, Integer> getChecksums()
 	{
 		return checksums;
 	}
