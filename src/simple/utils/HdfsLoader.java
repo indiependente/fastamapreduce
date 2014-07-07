@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class HdfsLoader 
 {
-	private static final String DELIMITER = "$$$";
+	public static final String DELIMITER = "$$$";
 	private Map<String, Object> checksums;
 
 	public HdfsLoader(String inputDirPath)
