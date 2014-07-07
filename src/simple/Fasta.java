@@ -27,6 +27,7 @@ public class Fasta extends Configured implements Tool
 		job.setReducerClass(FastaReducer.class);
 		
 		// map <long, text> --> <long, text> 
+		// reduce <long, list(text)> --> <text, text>
 				
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(Text.class);
