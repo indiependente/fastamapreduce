@@ -12,6 +12,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 import simple.utils.HdfsLoader;
 
@@ -20,9 +21,8 @@ public class Fasta extends Configured implements Tool
 	private static Log logger = LogFactory.getLog(Fasta.class);
 
 	@Override
-	public int run(String[] arg0) throws Exception 
+	public int run(String[] args) throws Exception 
 	{
-		
 		Job job = Job.getInstance(getConf(), getClass().getSimpleName());
 		HdfsLoader loader = new HdfsLoader("");
 
@@ -33,7 +33,7 @@ public class Fasta extends Configured implements Tool
 		
 		// load fasta36 in distributed cache
 		
-		job.addCacheFile(new Path("").toUri());
+		job.addCacheFile(new Path("./fasta/fasta36").toUri());
 		
 		// map <long, text> --> <long, text> 
 		// reduce <long, list(text)> --> <text, text>

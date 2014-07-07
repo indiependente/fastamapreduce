@@ -12,13 +12,14 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import simple.utils.HdfsLoader;
 
-public class FastaMapper extends Mapper<LongWritable, Text, LongWritable, Text>  
+public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
 {
 	private static Log logger = LogFactory.getLog(FastaMapper.class);
 	
@@ -106,8 +107,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, LongWritable, Text>
 			e.printStackTrace();
 		}
 		
-		context.write(new LongWritable(0), new Text(builder.toString()));
-		context.write(new LongWritable(1), new Text(builder.toString()));
+		context.write(new IntWritable(0), new Text(builder.toString()));
+		context.write(new IntWritable(1), new Text(builder.toString()));
 
 	}
 	
