@@ -22,7 +22,7 @@ import driver.ConfigurationLoader;
 
 public class HdfsLoader 
 {
-	private static final String DELIMITER = "$$$";
+	public static final String DELIMITER = "$$$";
 	private static String OUTPUT_NAME = "BIGFILE";
 	private static String CHAR_TO_REPLACE = "%";
 
@@ -175,6 +175,9 @@ public class HdfsLoader
 		}
 	}
 	
-
-
+	public Map<String, Object> getChecksums()
+	{
+		return checksums;
+	}
+	
 }
