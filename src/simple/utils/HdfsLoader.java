@@ -51,11 +51,13 @@ public class HdfsLoader
 	
 	public void setup(Configuration config, String inputDirPath){
 		toHdfs = new Path(INPUT_NAME);
-
+		
+		this.configuration = config;
+		
 		logger.info("> Input File Name: " + INPUT_NAME);
 		try 
 		{
-			fs = FileSystem.get(config);
+			fs = FileSystem.get(configuration);
 			logger.info("> Home directory: " + fs.getHomeDirectory());
 		} catch (IOException e) {
 			logger.fatal("Fatal error: Cannot get the FileSystem from Hadoop configuration");
