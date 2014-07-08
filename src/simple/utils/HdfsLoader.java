@@ -15,12 +15,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-
-import driver.ConfigurationLoader;
 
 public class HdfsLoader 
 {
@@ -36,8 +33,8 @@ public class HdfsLoader
 	private int lineNo = 0;
 
 	private FileSystem fs;
-	private FSDataInputStream in;
-	private FSDataOutputStream out;
+//	private FSDataInputStream in;
+//	private FSDataOutputStream out;
 	private Path toHdfs;
 	private Configuration configuration;
 	
@@ -78,8 +75,8 @@ public class HdfsLoader
 		String f1Content = null;
 		String f1NameFile = null;
 		String f2Content = null;
-		File f1 = null;
-		File f2 = null;
+//		File f1 = null;
+//		File f2 = null;
 
 		try 
 		{
