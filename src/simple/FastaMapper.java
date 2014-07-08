@@ -2,6 +2,7 @@ package simple;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,10 +13,16 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.filecache.DistributedCache;
+import org.apache.zookeeper.Shell;
+import org.mortbay.jetty.servlet.PathMap.Entry;
 
 import simple.utils.HdfsLoader;
 
@@ -23,23 +30,19 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 {
 	private static Log logger = LogFactory.getLog(FastaMapper.class);
 	
-	private String fastaPath; 
-	
+	private String fastaPath = ""; 
+		
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException 
 	{
 		super.setup(context);
-		/*
-		URI[] cachedFiles = context.getCacheFiles();
 		
-		for (URI u : cachedFiles)
-			System.out.println("-> " + u.getPath());
-		fastaPath = cachedFiles[0].getPath();
-		
-		*/
-		
-		fastaPath = "fasta36";
-		
+		Configuration config = context.getConfiguration();
+	    FileSystem dfs = FileSystem.get(config);
+	    
+	    dfs.copyToLocalFile(new Path(FastaSimpleJob.FASTA_BIN_PATH), new Path(FastaSimpleJob.FASTA_BIN_PATH));
+		fastaPath = new Path(FastaSimpleJob.FASTA_BIN_PATH).toString();
+		fastaPath = "/home/hduser/Scrivania/fasta36";
 	}
 
 	public String writeToFile(String name, String body)
@@ -48,7 +51,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		PrintStream printer = null;
 		try 
 		{
-			File tmp = File.createTempFile(name, ".tmp");
+			File tmp = new File("/home/hduser/Scrivania/" + name + ".tmp");
 			printer = new PrintStream(tmp);
 			printer.print(body);
 			ret = tmp.getAbsolutePath();
@@ -77,7 +80,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		List<String> arguments = new ArrayList<String>();
 		String[] w = {"", ""};
 		String[] paths = new String[w.length];
-		logger.info("starting...");
+		logger.info("starting with " + fastaPath + "...");
 		try 
 		{
 			arguments.add(fastaPath);
@@ -87,7 +90,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			if (line == null || line.length() <= 0)
 				return;
 			logger.info(line);
-			w = line.split(HdfsLoader.DELIMITER);
+			w = line.split(FastaSimpleJob.DELIMITER);
 			
 			if (w.length != 2)
 			{
@@ -95,15 +98,20 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 				return;
 			}
 			
-			paths[0] = writeToFile("reference", w[0].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
-			paths[1] = writeToFile("query", w[1].replaceAll(HdfsLoader.CHAR_TO_REPLACE, "\n"));
+			paths[0] = writeToFile("reference", w[0].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
+			paths[1] = writeToFile("query", w[1].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
 	
 			for (String s : paths)
 				arguments.add(s);
 			
 			runner = new ProcessBuilder(arguments);
+			runner.directory(new File("/home/hduser/Scrivania"));
 			runner.redirectErrorStream(true);
 			logger.info("running...");
+			
+			for (java.util.Map.Entry<String, String> e : runner.environment().entrySet())
+				logger.info(e.getKey() + " " + e.getValue());
+			
 			Process p = runner.start();
 			
 			InputStream stdin = p.getInputStream();
@@ -119,6 +127,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			}
 			
 			p.waitFor(); // it retuns the exit value..
+			
+		
 		}
 		catch (Exception e)
 		{
@@ -131,7 +141,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		context.write(new IntWritable(w[1].hashCode()), result);
 		
 		for (String s : paths)
-			(new File(s)).deleteOnExit();
+			(new File(s)).delete();
 
 	}
 	
