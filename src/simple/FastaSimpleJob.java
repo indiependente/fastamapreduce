@@ -25,12 +25,12 @@ import simple.utils.HdfsLoader;
 public class FastaSimpleJob extends Configured implements Tool 
 {
 	private static Log logger = LogFactory.getLog(FastaSimpleJob.class);
-
+	private static final String FASTA_BIN_PATH = "./fasta36";
 	@Override
 	public int run(String[] args) throws Exception 
 	{
 		Configuration config = getConf(); //ConfigurationLoader.getInstance().getConfiguration();
-		config.setInt("mapred.linerecordreader.maxlength", Integer.MAX_VALUE);
+		config.setInt("mapreduce.input.linerecordreader.line.maxlength", Integer.MAX_VALUE);
 		GenericOptionsParser parser = new GenericOptionsParser(config, args);
 		String[] argv = parser.getRemainingArgs();
 		Job job = Job.getInstance(config, getClass().getSimpleName());
@@ -50,7 +50,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		//job.addCacheFile(new Path("fasta36").toUri());
 		//job.createSymlink();
 		
-		Path fastaPath = new Path("fasta36");
+		Path fastaPath = new Path(FASTA_BIN_PATH);
 		loader.loadOnHDFS(fastaPath.getName());
 		DistributedCache.addCacheFile(fastaPath.toUri(), config);
 		
@@ -76,7 +76,7 @@ public class FastaSimpleJob extends Configured implements Tool
 	    int result = job.waitForCompletion(true) ? 0 : 1;
 		
 	    logger.info("Job completed in " + (System.currentTimeMillis() - startTime) + " ms");
-	    
+	    loader.clean();
 		return result;
 	}
 

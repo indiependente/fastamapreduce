@@ -55,6 +55,13 @@ public class HdfsLoader
 		this.configuration = config;
 		
 		logger.info("> Input File Name: " + INPUT_NAME);
+		
+		openFS();
+		
+		processInput(inputDirPath);
+	}
+	
+	private void openFS(){
 		try 
 		{
 			fs = FileSystem.get(configuration);
@@ -63,11 +70,9 @@ public class HdfsLoader
 			logger.fatal("Fatal error: Cannot get the FileSystem from Hadoop configuration");
 			System.exit(-1);
 		}
-		
-		processInput(inputDirPath);
 	}
 	
-
+	
 	public void processInput(String inputDirPath){
 
 		File folder = new File(inputDirPath);
@@ -175,39 +180,65 @@ public class HdfsLoader
 		
 		FSDataOutputStream stream = null;
 		BufferedWriter br = null;
-		try
-		{
-			stream = fs.create(toHdfs,true);
-			br = new BufferedWriter(new OutputStreamWriter(stream));
-			String s = FileUtils.readFileToString(f);
-			br.write(s);
-			
-		}
-		catch(Exception e){
-			System.out.println("File not found");
-		}
-		finally
-		{
+		String s = null;
+		
+		openFS();
+		
+		
 			try {
-				if (br != null)
-					br.close();
-				
-				if (stream != null)
-					stream.close();
-				
-				fs.close();
-				fs = null;
-			}
-			catch (Exception e)
-			{
+				stream = fs.create(toHdfs,true);
+			} catch (IOException e) {
+				logger.error("File not found: " + toHdfs.getName());
 				e.printStackTrace();
 			}
-		}
+			br = new BufferedWriter(new OutputStreamWriter(stream));
+			try {
+				s = FileUtils.readFileToString(f);
+			} catch (IOException e) {
+				logger.error("File not found: " + toHdfs.getName());
+				e.printStackTrace();
+			}
+			try {
+				br.write(s);
+			} catch (IOException e) {
+				logger.error("File not found: " + toHdfs.getName());
+				e.printStackTrace();
+			}finally
+			{
+				try {
+					if (br != null)
+						br.close();
+					
+					if (stream != null)
+						stream.close();
+					
+					closeFS();
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+		
+		
 	}
 	
+	private void closeFS() {
+		try {
+			fs.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		fs = null;
+	}
+
 	public Map<String, Integer> getChecksums()
 	{
 		return checksums;
+	}
+
+	public void clean() {
+		
 	}
 	
 }
