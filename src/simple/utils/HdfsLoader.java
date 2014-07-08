@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.file.FileSystemNotFoundException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class HdfsLoader
 	public static String INPUT_NAME = "BIGFILE";
 	public static String CHAR_TO_REPLACE = "%";
 
+	private static HdfsLoader instance;
 	private Map<String, Integer> checksums;
 //	private Map<Integer, String> inverseChecksums;
 	private Map<Integer, SimpleEntry<String,String>> coupleMap;
@@ -37,24 +39,35 @@ public class HdfsLoader
 	private FSDataInputStream in;
 	private FSDataOutputStream out;
 	private Path toHdfs;
-
-	public HdfsLoader(Configuration config, String inputDirPath)
-	{
+	private Configuration configuration;
+	
+	private HdfsLoader(){
+		checksums = new HashMap<String, Integer>();
+		coupleMap = new HashMap<Integer, SimpleEntry<String,String>>();
+	}
+	
+	public static HdfsLoader getInstance(){
+		if(instance == null)
+			instance = new HdfsLoader();
+		return instance;
+	}
+	
+	public void setup(Configuration config, String inputDirPath){
 		toHdfs = new Path(INPUT_NAME);
 
-		System.out.println(INPUT_NAME);
+		logger.info("> Input File Name: " + INPUT_NAME);
 		try 
 		{
 			fs = FileSystem.get(config);
-			System.out.println(fs.getHomeDirectory());
+			logger.info("> Home directory: " + fs.getHomeDirectory());
 		} catch (IOException e) {
 			logger.fatal("Fatal error: Cannot get the FileSystem from Hadoop configuration");
 			System.exit(-1);
 		}
-		checksums = new HashMap<String, Integer>();
-		coupleMap = new HashMap<Integer, SimpleEntry<String,String>>();
+		
 		processInput(inputDirPath);
 	}
+	
 
 	public void processInput(String inputDirPath){
 
@@ -114,9 +127,22 @@ public class HdfsLoader
 		
 	}
 
-
+	/**
+	 * Loads on the HDFS the file pointed by the parameter
+	 * @param path The path to a file on the local file system
+	 */
 	public void loadOnHDFS(String path){
+		if (fs != null)
+			throw new FileSystemNotFoundException("Trying to load on HDFS but the file system doesn't exist.");
 
+		File toBeLoaded = null;
+		try {
+			fs = FileSystem.get(configuration);
+			toBeLoaded = new File(path);
+			writeOnHDFS(toBeLoaded);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -171,6 +197,7 @@ public class HdfsLoader
 					stream.close();
 				
 				fs.close();
+				fs = null;
 			}
 			catch (Exception e)
 			{

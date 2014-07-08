@@ -34,8 +34,11 @@ public class FastaSimpleJob extends Configured implements Tool
 		GenericOptionsParser parser = new GenericOptionsParser(config, args);
 		String[] argv = parser.getRemainingArgs();
 		Job job = Job.getInstance(config, getClass().getSimpleName());
-		HdfsLoader loader = new HdfsLoader(config, argv[0]);
-
+//		HdfsLoader loader = new HdfsLoader(config, argv[0]);
+		
+		HdfsLoader loader = HdfsLoader.getInstance();
+		loader.setup(config, argv[0]);
+		
 		job.setJarByClass(FastaSimpleJob.class);
 		job.setMapperClass(FastaMapper.class);
 		job.setCombinerClass(FastaReducer.class);
@@ -48,6 +51,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		//job.createSymlink();
 		
 		Path fastaPath = new Path("fasta36");
+		loader.loadOnHDFS(fastaPath.getName());
 		DistributedCache.addCacheFile(fastaPath.toUri(), config);
 		
 		for (Entry<String, Integer> e : loader.getChecksums().entrySet())
