@@ -5,12 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 
 public class HDFSInputHelper {
 
@@ -77,5 +75,5 @@ public class HDFSInputHelper {
 		
 		return listOfFilesReturns;		
 	}
-		
+
 }
