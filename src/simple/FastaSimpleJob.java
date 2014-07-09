@@ -133,7 +133,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		job.setCombinerClass(FastaReducer.class);
 		job.setReducerClass(FastaReducer.class);
 		
-		job.setNumReduceTasks(filesCounter);
+//		job.setNumReduceTasks(filesCounter);
 		
 		// load fasta36 in distributed cache
 		

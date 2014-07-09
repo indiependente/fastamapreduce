@@ -11,7 +11,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 public class FastaReducer extends Reducer<IntWritable, Text, Text, Text> 
@@ -62,14 +61,19 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 		String ref = cfg.get("" + key.get()); // file name
 		// use create and write Text object there
 		Path path = new Path(ref);
-		FSDataOutputStream outStream = fs.create(path, true);
+		FSDataOutputStream outStream = null;
+		if (!fs.exists(path))
+			outStream = fs.create(path, true);
+		else
+			outStream = fs.append(path);
+		
 		for (Text t : values)
 		{
 			t.write(outStream);
 		}
 		outStream.close();
 		// write on context <key, path to file on hdfs>"
-		context.write(new Text(ref), new Text(path.toString()));
+		out.write(new Text(ref), new Text(path.toString()), "text");
 	}
 	
 	

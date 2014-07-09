@@ -1,13 +1,9 @@
 package simple;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +11,10 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.filecache.DistributedCache;
-import org.apache.zookeeper.Shell;
-import org.mortbay.jetty.servlet.PathMap.Entry;
 
 import utils.BinRunner;
 
@@ -119,7 +110,11 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			e.printStackTrace();
 		}
 		
-		String toWrite = new String(Files.readAllBytes((new File(absPath)).toPath()));
+		File absFile = new File(absPath);
+		if (!absFile.exists())
+			throw new FileNotFoundException("File not found: "+absFile.toString());
+		
+		String toWrite = new String(Files.readAllBytes(absFile.toPath()));
 		Text result = new Text(toWrite);
 		
 		context.write(new IntWritable(w[0].hashCode()), result);
@@ -128,7 +123,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		toWrite = null; // can I call System.gc() now?
 		
 		for (String s : paths)
-			(new File(s)).delete();
+			Files.delete(new File(s).toPath());
 
 	}
 	

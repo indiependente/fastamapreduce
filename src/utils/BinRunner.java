@@ -45,7 +45,7 @@ public class BinRunner {
 		if (pathToWorkingDir.endsWith("/"))
 			pathToWorkingDir = pathToWorkingDir.substring(0, pathToWorkingDir.length()-1);
 
-		args.add(0, pathToBin);
+//		args.add(0, pathToBin);
 		ProcessBuilder runner = new ProcessBuilder(args);
 		runner.directory(new File(pathToWorkingDir));
 		runner.redirectErrorStream(true);
