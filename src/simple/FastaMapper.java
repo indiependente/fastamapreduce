@@ -38,10 +38,10 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		super.setup(context);
 		
 		Configuration config = context.getConfiguration();
-	    FileSystem dfs = FileSystem.get(config);
+//		FileSystem dfs = FileSystem.get(config);
 	    
-	    dfs.copyToLocalFile(new Path(FastaSimpleJob.FASTA_BIN_PATH), new Path(FastaSimpleJob.FASTA_BIN_PATH));
-		fastaPath = new Path(FastaSimpleJob.FASTA_BIN_PATH).toString();
+//		dfs.copyToLocalFile(new Path(FastaSimpleJob.FASTA_BIN_PATH), new Path(FastaSimpleJob.FASTA_BIN_PATH));
+//		fastaPath = new Path(FastaSimpleJob.FASTA_BIN_PATH).toString();
 		fastaPath = "/home/hduser/Scrivania/fasta36";
 	}
 
@@ -109,8 +109,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			runner.redirectErrorStream(true);
 			logger.info("running...");
 			
-			for (java.util.Map.Entry<String, String> e : runner.environment().entrySet())
-				logger.info(e.getKey() + " " + e.getValue());
+//			for (java.util.Map.Entry<String, String> e : runner.environment().entrySet())
+//				logger.info(e.getKey() + " " + e.getValue());
 			
 			Process p = runner.start();
 			
@@ -123,7 +123,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			while ((line = buffer.readLine()) != null) 
 			{
 				builder.append(line + "\n");
-				logger.info(line);
+//				logger.info(line);
 			}
 			
 			p.waitFor(); // it retuns the exit value..

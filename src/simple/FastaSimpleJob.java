@@ -135,10 +135,10 @@ public class FastaSimpleJob extends Configured implements Tool
 		
 		//job.addCacheFile(new Path("fasta36").toUri());
 		//job.createSymlink();
-		
+		/*	
 		loader.deleteFromHdfs(FASTA_BIN_PATH);
 		loader.copyOnHdfs(FASTA_BIN_PATH, FASTA_BIN_PATH);
-	/*	
+		
 		DistributedCache.addCacheFile(new Path(FASTA_BIN_PATH).toUri(), job.getConfiguration());
 		DistributedCache.createSymlink(job.getConfiguration());
 	*/	
