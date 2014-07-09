@@ -24,10 +24,13 @@ import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.apache.zookeeper.Shell;
 import org.mortbay.jetty.servlet.PathMap.Entry;
 
+import simple.utils.BinRunner;
 import simple.utils.HdfsLoader;
 
 public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
 {
+	private static final String WORKING_DIR = "/home/hduser/Scrivania";
+
 	private static Log logger = LogFactory.getLog(FastaMapper.class);
 	
 	private String fastaPath = ""; 
@@ -76,7 +79,6 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException 
 	{
 		StringBuilder builder = new StringBuilder("");
-		ProcessBuilder runner = null;
 		List<String> arguments = new ArrayList<String>();
 		String[] w = {"", ""};
 		String[] paths = new String[w.length];
@@ -104,29 +106,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			for (String s : paths)
 				arguments.add(s);
 			
-			runner = new ProcessBuilder(arguments);
-			runner.directory(new File("/home/hduser/Scrivania"));
-			runner.redirectErrorStream(true);
-			logger.info("running...");
-			
-//			for (java.util.Map.Entry<String, String> e : runner.environment().entrySet())
-//				logger.info(e.getKey() + " " + e.getValue());
-			
-			Process p = runner.start();
-			
-			InputStream stdin = p.getInputStream();
-			InputStreamReader isr = new InputStreamReader(stdin);
-			BufferedReader buffer = new BufferedReader(isr);
-	
-			line = null;
-	
-			while ((line = buffer.readLine()) != null) 
-			{
-				builder.append(line + "\n");
-//				logger.info(line);
-			}
-			
-			p.waitFor(); // it retuns the exit value..
+			BinRunner.execute(fastaPath, WORKING_DIR, arguments);
 			
 		
 		}
@@ -144,6 +124,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			(new File(s)).delete();
 
 	}
+	
 	
 	
 	
