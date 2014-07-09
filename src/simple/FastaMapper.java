@@ -124,7 +124,9 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		
 		context.write(new IntWritable(w[0].hashCode()), result);
 		context.write(new IntWritable(w[1].hashCode()), result);
-
+		
+		toWrite = null; // can I call System.gc() now?
+		
 		for (String s : paths)
 			(new File(s)).delete();
 
