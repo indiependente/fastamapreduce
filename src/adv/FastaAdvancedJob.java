@@ -25,34 +25,49 @@ import org.apache.hadoop.util.ToolRunner;
 import simple.FastaMapper;
 import simple.FastaReducer;
 import simple.FastaSimpleJob;
+import utils.HdfsLoader;
 
 public class FastaAdvancedJob extends Configured implements Tool 
 {
 	private static Log LOG = LogFactory.getLog(FastaAdvancedJob.class);
 
+	public static final String TARGET = "TARGET";
 	public static final String INPUT_NAME = "BIGFILE";
+	public static final String DELIMITATOR = "%";
 	
 	public static final String WORKING_FILE_NAME = "fastamr.working.file";
 
+	
+	public static String cleanOutputName(String s)
+	{
+		return s.replaceAll(".", "").replaceAll("-", "").replaceAll("_", "");
+	}
+	
 	@Override
 	public int run(String[] args) throws Exception 
 	{
 		GenericOptionsParser parser = new GenericOptionsParser(getConf(), args);
 		String[] argv = parser.getRemainingArgs();
 		
+		HdfsLoader loader = HdfsLoader.getInstance().setup(getConf());
 		String inputDir = argv[0];
 		
-		List<String> list = new ArrayList<String>();
-		
-		for (String file : list)
+		List<String> list = HDFSInputHelper.prepare(inputDir, INPUT_NAME, DELIMITATOR);
+		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
+		loader.deleteFromHdfs("OUTPUT");
+				
+		for (int i = 0, l = list.size(); i < l; i++)
 		{
+			String file = list.get(i);
 			Configuration config = getConf();
 			config.setInt(FastaSimpleJob.MAPREDUCE_LINERECORD_LENGTH, Integer.MAX_VALUE);
 			Job job = Job.getInstance(config, getClass().getSimpleName());
 			config = job.getConfiguration(); // it must be done since it changes after job init
 			
 			config.set(WORKING_FILE_NAME, file);
-			DistributedCache.addLocalFiles(config, inputDir + "/" + file);
+			
+			loader.deleteFromHdfs(TARGET);
+			loader.copyOnHdfs(inputDir + "/" + file, TARGET);
 			
 			job.setJarByClass(FastaAdvancedJob.class);
 			job.setMapperClass(FastaAdvMapper.class);
@@ -65,10 +80,11 @@ public class FastaAdvancedJob extends Configured implements Tool
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			
-			MultipleOutputs.addNamedOutput(job, file, TextOutputFormat.class, Text.class, Text.class);
+			
+			MultipleOutputs.addNamedOutput(job, "text" + i, TextOutputFormat.class, Text.class, Text.class);
 			
 		    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
-		    FileOutputFormat.setOutputPath(job, new Path("OUTPUT"));
+		    FileOutputFormat.setOutputPath(job, new Path("OUTPUT" + i));
 		    
 		    long startTime = System.currentTimeMillis();
 		    if (job.waitForCompletion(true))

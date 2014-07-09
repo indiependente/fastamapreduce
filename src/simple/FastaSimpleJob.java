@@ -29,7 +29,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import driver.ConfigurationLoader;
 
-import simple.utils.HdfsLoader;
+import utils.HdfsLoader;
 
 public class FastaSimpleJob extends Configured implements Tool 
 {

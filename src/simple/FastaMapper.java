@@ -24,7 +24,7 @@ import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.apache.zookeeper.Shell;
 import org.mortbay.jetty.servlet.PathMap.Entry;
 
-import simple.utils.HdfsLoader;
+import utils.HdfsLoader;
 
 public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
 {

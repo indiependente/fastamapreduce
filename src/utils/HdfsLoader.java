@@ -1,4 +1,4 @@
-package simple.utils;
+package utils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -77,14 +77,27 @@ public class HdfsLoader
 	public void copyOnHdfs(String srcFilePath, String destFilePath) 
 	{
 		
-		FSDataOutputStream stream = null;
-		BufferedWriter br = null;
-		String s = null;
-		
 		openHdfs();
 		
 		try {
 			fs.copyFromLocalFile(new Path(srcFilePath), new Path(destFilePath));
+		} catch (IllegalArgumentException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		closeHdfs();	
+		
+	}
+	
+	public void copyFromHdfs(String srcFilePath, String destFilePath) 
+	{
+		
+		
+		openHdfs();
+		
+		try {
+			fs.copyToLocalFile(new Path(srcFilePath), new Path(destFilePath));
 		} catch (IllegalArgumentException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -100,7 +113,23 @@ public class HdfsLoader
 		openHdfs();
 		
 		try {
-			fs.delete(new Path(fileName), true);
+			Path p = new Path(fileName);
+			if (fs.exists(p))
+				fs.delete(p, true);
+		} catch (IllegalArgumentException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		closeHdfs();
+	}
+	
+	public void mkdir(String dirName)
+	{
+		openHdfs();
+		
+		try {
+			fs.mkdirs(new Path(dirName));
 		} catch (IllegalArgumentException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

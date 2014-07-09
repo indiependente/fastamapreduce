@@ -15,12 +15,12 @@ public class HDFSInputHelper {
 	private static Log logger = LogFactory.getLog(HDFSInputHelper.class);
 
 	
-	static ArrayList<String> prepare(String inputDirPath, String delimitator) 
+	static ArrayList<String> prepare(String inputDirPath, String outFileName, String delimitator) 
 	{
 		File folder = new File(inputDirPath);
 		File[] listOfFiles = folder.listFiles();
 		
-		File fileInput = new File("fileInput");
+		File fileInput = new File(outFileName);
 		
 		String fContent = null;
 		String fName = null;
