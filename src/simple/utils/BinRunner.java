@@ -20,8 +20,15 @@ public class BinRunner {
 	private static Log logger = LogFactory.getLog(BinRunner.class);
 
 
-
-	public static int execute(String pathToBin, String pathToWorkingDir, List<String> args) throws IOException{
+	/**
+	 * Static method that executes a binary executable file in a given working directory. Takes the list of argument too.
+	 * @param pathToBin Path to the binary file
+	 * @param pathToWorkingDir Path to the working directory
+	 * @param args Arguments to be supplied at the binary file
+	 * @return The absolute path to the output file
+	 * @throws IOException
+	 */
+	public static String execute(String pathToBin, String pathToWorkingDir, List<String> args) throws IOException{
 		//		logger.info(pathToBin);
 		//		logger.info(pathToWorkingDir);
 
@@ -84,7 +91,7 @@ public class BinRunner {
 		} finally {
 			printWriter.close();
 		}
-		return retValue;
+		return filename;
 	}
 
 	//	public static void main(String args[]){

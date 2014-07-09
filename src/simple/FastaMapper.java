@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +83,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		List<String> arguments = new ArrayList<String>();
 		String[] w = {"", ""};
 		String[] paths = new String[w.length];
+		String absPath = null;
+		
 		logger.info("starting with " + fastaPath + "...");
 		try 
 		{
@@ -106,7 +109,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			for (String s : paths)
 				arguments.add(s);
 			
-			BinRunner.execute(fastaPath, WORKING_DIR, arguments);
+			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments);
 			
 		
 		}
@@ -116,10 +119,12 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			e.printStackTrace();
 		}
 		
-		Text result = new Text(builder.toString());
+		String toWrite = new String(Files.readAllBytes((new File(absPath)).toPath()));
+		Text result = new Text(toWrite);
+		
 		context.write(new IntWritable(w[0].hashCode()), result);
 		context.write(new IntWritable(w[1].hashCode()), result);
-		
+
 		for (String s : paths)
 			(new File(s)).delete();
 
