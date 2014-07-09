@@ -1,4 +1,4 @@
-package simple.utils;
+package utils;
 
 
 import java.io.BufferedReader;
@@ -17,30 +17,34 @@ import org.apache.commons.logging.LogFactory;
 
 public class BinRunner {
 
-	private static BinRunner instance;
 	private static Log logger = LogFactory.getLog(BinRunner.class);
 
-	private BinRunner(){
 
-	}
+	/**
+	 * Static method that executes a binary executable file in a given working directory. Takes the list of argument too.
+	 * @param pathToBin Path to the binary file
+	 * @param pathToWorkingDir Path to the working directory
+	 * @param args Arguments to be supplied at the binary file
+	 * @return The absolute path to the output file
+	 * @throws IOException
+	 */
+	public static String execute(String pathToBin, String pathToWorkingDir, List<String> args) throws IOException{
+		//		logger.info(pathToBin);
+		//		logger.info(pathToWorkingDir);
 
-	public static BinRunner getInstance(){
-		if (instance == null)
-			instance = new BinRunner();
-		return instance;
-	}
+		//		for (int i = 0; i<args.size(); i++){
+		//			logger.info(args.get(i));
+		//		}
+		//		
+		File binFile = new File(pathToBin);
+		if (!binFile.exists())
+			throw new FileNotFoundException("File not found: "+pathToBin);
+		if (!binFile.canExecute())
+			throw new IOException("Cannot execute program: "+pathToBin);
 
-	public int execute(String pathToBin, String pathToWorkingDir, List<String> args){
-//		logger.info(pathToBin);
-//		logger.info(pathToWorkingDir);
-
-//		for (int i = 0; i<args.size(); i++){
-//			logger.info(args.get(i));
-//		}
-//		
 		if (pathToWorkingDir.endsWith("/"))
 			pathToWorkingDir = pathToWorkingDir.substring(0, pathToWorkingDir.length()-1);
-		
+
 		args.add(0, pathToBin);
 		ProcessBuilder runner = new ProcessBuilder(args);
 		runner.directory(new File(pathToWorkingDir));
@@ -58,9 +62,8 @@ public class BinRunner {
 		InputStream stdin = p.getInputStream();
 		InputStreamReader isr = new InputStreamReader(stdin);
 		BufferedReader buffer = new BufferedReader(isr);
-		
+
 		String filename = pathToWorkingDir + pathToBin.substring(pathToBin.lastIndexOf("/"), pathToBin.length())+"_"+(new Date()).toString().replaceAll(" ", "_")+".out";
-		System.out.println(filename);
 
 		PrintWriter printWriter = null;
 		try {
@@ -72,7 +75,6 @@ public class BinRunner {
 				while ((line = buffer.readLine()) != null) 
 				{
 					printWriter.println(line);
-
 				}
 			}catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -89,14 +91,13 @@ public class BinRunner {
 		} finally {
 			printWriter.close();
 		}
-		return retValue;
+		return filename;
 	}
 
-//	public static void main(String args[]){
-//		BinRunner br = BinRunner.getInstance();
-//		ArrayList<String> arrayList = new ArrayList<String>();
-//		arrayList.add("mimmo");
-//		arrayList.add("buddo");
-//		br.execute("/Users/francescofarina/discovering/floatcond", "/Users/francescofarina/discovering/", arrayList);
-//	}
+	//	public static void main(String args[]){
+	//		ArrayList<String> arrayList = new ArrayList<String>();
+	//		arrayList.add("mimmo");
+	//		arrayList.add("buddo");
+	//		BinRunner.execute("/Users/francescofarina/discovering/floatcond", "/Users/francescofarina/discovering/", arrayList);
+	//	}
 }

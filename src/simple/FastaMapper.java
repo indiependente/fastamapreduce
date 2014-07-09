@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +25,14 @@ import org.apache.hadoop.mapreduce.filecache.DistributedCache;
 import org.apache.zookeeper.Shell;
 import org.mortbay.jetty.servlet.PathMap.Entry;
 
-import utils.HdfsLoader;
+import utils.BinRunner;
+
+
 
 public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
 {
+	private static final String WORKING_DIR = "/home/hduser/Scrivania";
+
 	private static Log logger = LogFactory.getLog(FastaMapper.class);
 	
 	private String fastaPath = ""; 
@@ -75,11 +80,11 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 	@Override
 	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException 
 	{
-		StringBuilder builder = new StringBuilder("");
-		ProcessBuilder runner = null;
 		List<String> arguments = new ArrayList<String>();
 		String[] w = {"", ""};
 		String[] paths = new String[w.length];
+		String absPath = null;
+		
 		logger.info("starting with " + fastaPath + "...");
 		try 
 		{
@@ -89,7 +94,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			String line = value.toString();
 			if (line == null || line.length() <= 0)
 				return;
-			logger.info(line);
+//			logger.info(line);
 			w = line.split(FastaSimpleJob.DELIMITER);
 			
 			if (w.length != 2)
@@ -104,29 +109,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			for (String s : paths)
 				arguments.add(s);
 			
-			runner = new ProcessBuilder(arguments);
-			runner.directory(new File("/home/hduser/Scrivania"));
-			runner.redirectErrorStream(true);
-			logger.info("running...");
-			
-//			for (java.util.Map.Entry<String, String> e : runner.environment().entrySet())
-//				logger.info(e.getKey() + " " + e.getValue());
-			
-			Process p = runner.start();
-			
-			InputStream stdin = p.getInputStream();
-			InputStreamReader isr = new InputStreamReader(stdin);
-			BufferedReader buffer = new BufferedReader(isr);
-	
-			line = null;
-	
-			while ((line = buffer.readLine()) != null) 
-			{
-				builder.append(line + "\n");
-//				logger.info(line);
-			}
-			
-			p.waitFor(); // it retuns the exit value..
+			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments);
 			
 		
 		}
@@ -136,14 +119,19 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			e.printStackTrace();
 		}
 		
-		Text result = new Text(builder.toString());
+		String toWrite = new String(Files.readAllBytes((new File(absPath)).toPath()));
+		Text result = new Text(toWrite);
+		
 		context.write(new IntWritable(w[0].hashCode()), result);
 		context.write(new IntWritable(w[1].hashCode()), result);
+		
+		toWrite = null; // can I call System.gc() now?
 		
 		for (String s : paths)
 			(new File(s)).delete();
 
 	}
+	
 	
 	
 	

@@ -21,8 +21,7 @@ import org.apache.hadoop.fs.Path;
 
 public class HdfsLoader 
 {
-	private static HdfsLoader instance;
-	private String inputDirPath;
+	private static HdfsLoader instance = null;
 	private static Log logger = LogFactory.getLog(HdfsLoader.class);
 
 	private FileSystem fs;
@@ -42,7 +41,6 @@ public class HdfsLoader
 	{
 		this.fs = null;
 		this.config = config;
-		this.inputDirPath = inputDirPath;
 		return this;
 	}
 	

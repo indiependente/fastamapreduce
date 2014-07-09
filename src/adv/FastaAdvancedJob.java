@@ -75,7 +75,7 @@ public class FastaAdvancedJob extends Configured implements Tool
 			job.setCombinerClass(FastaAdvReducer.class);
 			job.setReducerClass(FastaAdvReducer.class);
 			
-			job.setMapOutputKeyClass(Text.class);
+			job.setMapOutputKeyClass(IntWritable.class);
 			job.setMapOutputValueClass(Text.class);
 			
 			job.setOutputKeyClass(Text.class);

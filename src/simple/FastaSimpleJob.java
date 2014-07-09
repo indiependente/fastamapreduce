@@ -46,7 +46,7 @@ public class FastaSimpleJob extends Configured implements Tool
 	private Map<String, Integer> checksums;
 	
 	
-	public void prepareInputForHdfs()
+	public int prepareInputForHdfs()
 	{
 		File folder = new File(inputDir);
 		File[] listOfFiles = folder.listFiles();
@@ -101,6 +101,7 @@ public class FastaSimpleJob extends Configured implements Tool
 			if (writer != null)
 				writer.close();
 		}
+		return listOfFiles.length;
 	}
 	
 	
@@ -122,7 +123,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		HdfsLoader loader = HdfsLoader.getInstance();
 		loader.setup(job.getConfiguration());
 		
-		prepareInputForHdfs();
+		int filesCounter = prepareInputForHdfs();
 		
 		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
 		loader.deleteFromHdfs("OUTPUT");
@@ -132,6 +133,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		job.setCombinerClass(FastaReducer.class);
 		job.setReducerClass(FastaReducer.class);
 		
+		job.setNumReduceTasks(filesCounter);
 		
 		// load fasta36 in distributed cache
 		
