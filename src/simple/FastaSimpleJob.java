@@ -36,6 +36,8 @@ public class FastaSimpleJob extends Configured implements Tool
 	private static Log logger = LogFactory.getLog(FastaSimpleJob.class);
 	public static final String FASTA_BIN_PATH = "./fasta36";
 	
+	public static final String MAPREDUCE_LINERECORD_LENGTH = "mapreduce.input.linerecordreader.line.maxlength";
+	
 	public static final String DELIMITER = "@@@";
 	public static String INPUT_NAME = "BIGFILE";
 	public static String CHAR_TO_REPLACE = "%";
@@ -107,7 +109,7 @@ public class FastaSimpleJob extends Configured implements Tool
 	public int run(String[] args) throws Exception 
 	{
 		Configuration config = getConf(); //ConfigurationLoader.getInstance().getConfiguration();
-		config.setInt("mapreduce.input.linerecordreader.line.maxlength", Integer.MAX_VALUE);
+		config.setInt(MAPREDUCE_LINERECORD_LENGTH, Integer.MAX_VALUE);
 		GenericOptionsParser parser = new GenericOptionsParser(config, args);
 		String[] argv = parser.getRemainingArgs();
 		
@@ -154,8 +156,6 @@ public class FastaSimpleJob extends Configured implements Tool
 		job.setMapOutputKeyClass(IntWritable.class);
 		job.setMapOutputValueClass(Text.class);
 		
-		
-		
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 		
@@ -177,7 +177,7 @@ public class FastaSimpleJob extends Configured implements Tool
 
 
 	public static void main(String[] args) {
-		int result = 1;
+		int result = -1;
 		try 
 		{
 			result = ToolRunner.run(new FastaSimpleJob(), args);

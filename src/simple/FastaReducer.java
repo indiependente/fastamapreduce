@@ -42,16 +42,12 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 	{
 		StringBuilder res = new StringBuilder("");
 		Configuration cfg = context.getConfiguration();
-		logger.info("::> " + key.get());
 		String ref = cfg.get("" + key.get());
-		logger.info(":>:> " + ref);
 		for (Text t : values)
 		{
 			res.append(t.toString());
 			res.append("\n\n");
 		}
-		
-		//context.write(new Text(ref), new Text(res.toString()));
 		out.write(new Text(ref), new Text(res.toString()), "text");
 	}
 }
