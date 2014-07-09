@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -17,7 +18,7 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 	
 	private MultipleOutputs<Text, Text> out;
 	
-	
+	private FileSystem fs = null;
 	
 	@Override
 	protected void cleanup(Context context) throws IOException,
@@ -34,10 +35,11 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 			InterruptedException {
 		super.setup(context);
 		out = new MultipleOutputs<Text, Text>(context);
+		fs = FileSystem.get(context.getConfiguration());
 	}
 
 
-
+/*
 	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
 		StringBuilder res = new StringBuilder("");
@@ -50,4 +52,19 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 		}
 		out.write(new Text(ref), new Text(res.toString()), "text");
 	}
+*/
+	
+	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
+	{
+		Configuration cfg = context.getConfiguration();
+		String ref = cfg.get("" + key.get());
+		// use create and write Text object there
+		for (Text t : values)
+		{
+			
+		}
+		// write on context <key, path to file on hdfs>"
+	}
+	
+	
 }
