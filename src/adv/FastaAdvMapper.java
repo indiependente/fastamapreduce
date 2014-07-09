@@ -30,9 +30,9 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		Configuration cfg = context.getConfiguration();
 		String fname = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		LOG.info("setup " + fname);
-		HdfsLoader hdfs = HdfsLoader.getInstance().setup(cfg);
+		FileSystem fs = FileSystem.get(cfg);
 		path = "/home/hduser/Scrivania" + FastaAdvancedJob.TARGET;
-		hdfs.copyFromHdfs(FastaAdvancedJob.TARGET, path);
+		fs.copyToLocalFile(new Path(FastaAdvancedJob.TARGET), new Path(path));
 	}
 
 	@Override

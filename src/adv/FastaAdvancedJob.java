@@ -67,6 +67,7 @@ public class FastaAdvancedJob extends Configured implements Tool
 			config.set(WORKING_FILE_NAME, file);
 			
 			loader.deleteFromHdfs(TARGET);
+			loader.deleteFromHdfs("OUTPUT" + i);
 			loader.copyOnHdfs(inputDir + "/" + file, TARGET);
 			
 			job.setJarByClass(FastaAdvancedJob.class);
