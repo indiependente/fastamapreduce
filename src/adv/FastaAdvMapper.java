@@ -20,7 +20,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import simple.FastaReducer;
 import simple.FastaSimpleJob;
 import utils.BinRunner;
-import utils.HdfsLoader;
 
 public class FastaAdvMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
 {

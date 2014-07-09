@@ -5,7 +5,9 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -57,13 +59,17 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
 		Configuration cfg = context.getConfiguration();
-		String ref = cfg.get("" + key.get());
+		String ref = cfg.get("" + key.get()); // file name
 		// use create and write Text object there
+		Path path = new Path(ref);
+		FSDataOutputStream outStream = fs.create(path, true);
 		for (Text t : values)
 		{
-			
+			t.write(outStream);
 		}
+		outStream.close();
 		// write on context <key, path to file on hdfs>"
+		context.write(new Text(ref), new Text(path.toString()));
 	}
 	
 	
