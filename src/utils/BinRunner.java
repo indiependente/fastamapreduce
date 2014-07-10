@@ -25,10 +25,11 @@ public class BinRunner {
 	 * @param pathToBin Path to the binary file
 	 * @param pathToWorkingDir Path to the working directory
 	 * @param args Arguments to be supplied at the binary file
+	 * @param runnable 
 	 * @return The absolute path to the output file
 	 * @throws IOException
 	 */
-	public static String execute(String pathToBin, String pathToWorkingDir, List<String> args) throws IOException{
+	public static String execute(String pathToBin, String pathToWorkingDir, List<String> args, Runnable runnable) throws IOException{
 		//		logger.info(pathToBin);
 		//		logger.info(pathToWorkingDir);
 
@@ -75,6 +76,7 @@ public class BinRunner {
 				while ((line = buffer.readLine()) != null) 
 				{
 					printWriter.println(line);
+					runnable.run();
 				}
 			}catch (FileNotFoundException e) {
 				e.printStackTrace();

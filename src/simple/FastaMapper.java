@@ -15,18 +15,21 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import utils.BinRunner;
 
 
 
-public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>  
+public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>  
 {
 	private static final String WORKING_DIR = "/home/hduser/Scrivania";
 
 	private static Log logger = LogFactory.getLog(FastaMapper.class);
 	
 	private String fastaPath = ""; 
+	
+	private ArrayList<String> filesToDelete;
 		
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException 
@@ -39,7 +42,24 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 //		dfs.copyToLocalFile(new Path(FastaSimpleJob.FASTA_BIN_PATH), new Path(FastaSimpleJob.FASTA_BIN_PATH));
 //		fastaPath = new Path(FastaSimpleJob.FASTA_BIN_PATH).toString();
 		fastaPath = "/home/hduser/Scrivania/fasta36";
+		filesToDelete = new ArrayList<String>();
 	}
+	
+	
+	
+
+	@Override
+	protected void cleanup(Context context) throws IOException,
+			InterruptedException {
+		// TODO Auto-generated method stub
+		super.cleanup(context);
+		for (String path : filesToDelete)
+			java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(path));
+
+	}
+
+
+
 
 	public String writeToFile(String name, String body)
 	{
@@ -76,7 +96,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		String[] paths = new String[w.length];
 		String absPath = null;
 		
-		logger.info("starting with " + fastaPath + "...");
+		logger.info("starting mapper with " + fastaPath + "...");
 		try 
 		{
 			arguments.add(fastaPath);
@@ -100,9 +120,18 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 			for (String s : paths)
 				arguments.add(s);
 			
-			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments);
-			
-		
+			final Context finalContext = context;
+			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments,
+					new Runnable() {
+
+						@Override
+						public void run() {
+							finalContext.progress();
+						}
+						
+					}
+			);
+			filesToDelete.add(absPath);
 		}
 		catch (Exception e)
 		{
@@ -117,8 +146,8 @@ public class FastaMapper extends Mapper<LongWritable, Text, IntWritable, Text>
 		String toWrite = new String(Files.readAllBytes(absFile.toPath()));
 		Text result = new Text(toWrite);
 		
-		context.write(new IntWritable(w[0].hashCode()), result);
-		context.write(new IntWritable(w[1].hashCode()), result);
+		context.write(new Text(FastaSimpleJob.md5(w[0])), result);
+		context.write(new Text(FastaSimpleJob.md5(w[1])), result);
 		
 		toWrite = null; // can I call System.gc() now?
 		

@@ -3,11 +3,16 @@ package simple;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,6 +21,8 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.ClusterStatus;
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.filecache.DistributedCache;
@@ -40,10 +47,11 @@ public class FastaSimpleJob extends Configured implements Tool
 	
 	public static final String DELIMITER = "@@@";
 	public static String INPUT_NAME = "BIGFILE";
+	public static String ALIGNMENTS_DIR = "ALIGNMENTS";
 	public static String CHAR_TO_REPLACE = "%";
 	
 	private String inputDir;
-	private Map<String, Integer> checksums;
+	private Map<String, String> checksums;
 	
 	
 	public int prepareInputForHdfs()
@@ -52,6 +60,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		File[] listOfFiles = folder.listFiles();
 		File output = new File(INPUT_NAME);	
 		PrintStream writer = null;
+		logger.info("preparing input for hdfs...");
 		try
 		{
 			writer = new PrintStream(output);
@@ -72,7 +81,7 @@ public class FastaSimpleJob extends Configured implements Tool
 	
 				}
 	
-				checksums.put(fileNameX, fileContentX.hashCode());
+				checksums.put(fileNameX, md5(fileContentX));
 	
 				for (int j = i + 1; j < listOfFiles.length; j++)
 				{
@@ -81,7 +90,7 @@ public class FastaSimpleJob extends Configured implements Tool
 						fileNameY = listOfFiles[j].getName();
 						fileContentY = FileUtils.readFileToString(listOfFiles[j]).replaceAll("\n", CHAR_TO_REPLACE).replaceAll("\r", "").trim();
 						writer.print(fileContentX + DELIMITER + fileContentY + "\n");
-						checksums.put(fileNameY, fileContentY.hashCode());
+						checksums.put(fileNameY, md5(fileContentY));
 					}
 					catch (IOException e) {
 						logger.fatal("Fatal error: Cannot read file " + listOfFiles[j]);
@@ -101,8 +110,14 @@ public class FastaSimpleJob extends Configured implements Tool
 			if (writer != null)
 				writer.close();
 		}
+		logger.info("input for hdfs ready...");
 		return listOfFiles.length;
 	}
+	
+	public static String md5(String input)
+	{
+		return DigestUtils.md5Hex(input);
+    }
 	
 	
 	
@@ -114,26 +129,37 @@ public class FastaSimpleJob extends Configured implements Tool
 		GenericOptionsParser parser = new GenericOptionsParser(config, args);
 		String[] argv = parser.getRemainingArgs();
 		
-		checksums = new HashMap<String, Integer>();
+		checksums = new HashMap<String, String>();
 		inputDir = argv[0];
 		
+		
+		logger.info("configuring job....");
 		Job job = Job.getInstance(config, getClass().getSimpleName());
 //		HdfsLoader loader = new HdfsLoader(config, argv[0]);
+		
 		
 		HdfsLoader loader = HdfsLoader.getInstance();
 		loader.setup(job.getConfiguration());
 		
 		int filesCounter = prepareInputForHdfs();
 		
+		JobClient jclient = new JobClient(job.getConfiguration());
+		
+		int numOfReducer = Math.min(filesCounter, jclient.getClusterStatus(true).getActiveTrackerNames().size());
+		
+		logger.info("selected # of reducers: " + numOfReducer);
+		
 		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
 		loader.deleteFromHdfs("OUTPUT");
+		loader.deleteFromHdfs(ALIGNMENTS_DIR);
+		loader.mkdir(ALIGNMENTS_DIR);
 		
 		job.setJarByClass(FastaSimpleJob.class);
 		job.setMapperClass(FastaMapper.class);
 		job.setCombinerClass(FastaReducer.class);
 		job.setReducerClass(FastaReducer.class);
 		
-//		job.setNumReduceTasks(filesCounter);
+		job.setNumReduceTasks(numOfReducer);
 		
 		// load fasta36 in distributed cache
 		
@@ -146,48 +172,53 @@ public class FastaSimpleJob extends Configured implements Tool
 		DistributedCache.addCacheFile(new Path(FASTA_BIN_PATH).toUri(), job.getConfiguration());
 		DistributedCache.createSymlink(job.getConfiguration());
 	*/	
-		for (Entry<String, Integer> e : checksums.entrySet())
-		{
-			job.getConfiguration().setInt(e.getKey(), e.getValue());
-			job.getConfiguration().set("" + e.getValue(), e.getKey());
-		}
+		
 			
 		// map <long, text> --> <long, text> 
 		// reduce <int, list(text)> --> <text, text>
 				
-		job.setMapOutputKeyClass(IntWritable.class);
+		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 		
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 		
-		MultipleOutputs.addNamedOutput(job, "text", TextOutputFormat.class, Text.class, Text.class);
+		config = job.getConfiguration();
+		for (Entry<String, String> e : checksums.entrySet())
+		{
+			logger.info(e.getKey() + " => " + e.getValue());
+			config.set(e.getKey(), e.getValue());
+			config.set(e.getValue(), e.getKey());
+			MultipleOutputs.addNamedOutput(job, e.getValue(), TextOutputFormat.class, Text.class, Text.class);
+		}
 
 		
 	    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
 	    FileOutputFormat.setOutputPath(job, new Path("OUTPUT"));
 	    
 	    long startTime = System.currentTimeMillis();
+	    logger.info("starting job...");
 	    int result = job.waitForCompletion(true) ? 0 : 1;
 		
 	    logger.info("Job completed in " + (System.currentTimeMillis() - startTime) + " ms");
 
-	    (new File(INPUT_NAME)).deleteOnExit();
-	    
+	    Files.deleteIfExists(Paths.get(INPUT_NAME));
 	    return result;
 	}
 
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		int result = -1;
 		try 
 		{
+			logger.info("Starting tool...");
 			result = ToolRunner.run(new FastaSimpleJob(), args);
 		} 
 		catch (Exception e) 
 		{
 			e.printStackTrace();
-			System.out.println("Job failed.");
+			logger.info("Job failed.");
 		}
 		System.exit(result);
 	}

@@ -13,7 +13,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
-public class FastaReducer extends Reducer<IntWritable, Text, Text, Text> 
+public class FastaReducer extends Reducer<Text, Text, Text, Text> 
 {
 	private static Log logger = LogFactory.getLog(FastaReducer.class);
 	
@@ -55,12 +55,13 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 	}
 */
 	
-	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
+	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
 		Configuration cfg = context.getConfiguration();
-		String ref = cfg.get("" + key.get()); // file name
+		String md5 = key.toString();
+		String ref = cfg.get(md5); // file name
 		// use create and write Text object there
-		Path path = new Path(ref);
+		Path path = new Path(FastaSimpleJob.ALIGNMENTS_DIR + "/" + ref);
 		FSDataOutputStream outStream = null;
 		if (!fs.exists(path))
 			outStream = fs.create(path, true);
@@ -73,7 +74,7 @@ public class FastaReducer extends Reducer<IntWritable, Text, Text, Text>
 		}
 		outStream.close();
 		// write on context <key, path to file on hdfs>"
-		out.write(new Text(ref), new Text(path.toString()), "text");
+		out.write(new Text(ref), new Text(path.toString()), md5);
 	}
 	
 	

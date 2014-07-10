@@ -107,7 +107,7 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, IntWritable, Text
 	
 			arguments.add(tmpFile);
 			
-			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments);
+			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments, new Runnable() { public void run() { } });
 			
 		
 		}
