@@ -5,7 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,8 +17,12 @@ public class HDFSInputHelper {
 
 	private static Log logger = LogFactory.getLog(HDFSInputHelper.class);
 
+	public static String md5(String input)
+	{
+		return DigestUtils.md5Hex(input);
+    }
 	
-	static ArrayList<String> prepare(String inputDirPath, String outFileName, String delimitator) 
+	static Map<String, String> prepareInputFile(String inputDirPath, String outFileName, String delimitator) 
 	{
 		File folder = new File(inputDirPath);
 		File[] listOfFiles = folder.listFiles();
@@ -25,7 +32,7 @@ public class HDFSInputHelper {
 		String fContent = null;
 		String fName = null;
 		
-		ArrayList<String> listOfFilesReturns = new ArrayList<String>();
+		Map<String, String> ret = new HashMap<String, String>();
 		
 		
 		PrintWriter writer = null;
@@ -43,7 +50,7 @@ public class HDFSInputHelper {
 		
 		try{
 			
-			for(int i=0; i<listOfFiles.length; i++)
+			for (int i=0; i<listOfFiles.length; i++)
 			{
 
 				fContent = FileUtils.readFileToString(listOfFiles[i]).replaceAll("\r", "").replaceAll("\n", delimitator );
@@ -51,7 +58,7 @@ public class HDFSInputHelper {
 
 				writer.print(fContent + "\n");
 
-				listOfFilesReturns.add(fName);		
+				ret.put(fName, md5(fContent));		
 			}
 			
 		}catch (IOException e) {
@@ -64,7 +71,7 @@ public class HDFSInputHelper {
 			writer.close();
 		}
 
-		if(listOfFilesReturns.isEmpty())
+		if(ret.isEmpty())
 		{	
 			try {
 				throw new Exception(inputDirPath+" is empty.");
@@ -73,7 +80,7 @@ public class HDFSInputHelper {
 			}
 		}
 		
-		return listOfFilesReturns;		
+		return ret;		
 	}
 
 }

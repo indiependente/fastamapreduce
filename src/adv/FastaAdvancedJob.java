@@ -4,7 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +46,8 @@ public class FastaAdvancedJob extends Configured implements Tool
 		return s.replaceAll(".", "").replaceAll("-", "").replaceAll("_", "");
 	}
 	
+	
+	
 	@Override
 	public int run(String[] args) throws Exception 
 	{
@@ -52,13 +57,14 @@ public class FastaAdvancedJob extends Configured implements Tool
 		HdfsLoader loader = HdfsLoader.getInstance().setup(getConf());
 		String inputDir = argv[0];
 		
-		List<String> list = HDFSInputHelper.prepare(inputDir, INPUT_NAME, DELIMITATOR);
+		Map<String, String> checksums = HDFSInputHelper.prepareInputFile(inputDir, INPUT_NAME, DELIMITATOR);
 		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
 		loader.deleteFromHdfs("OUTPUT");
 				
-		for (int i = 0, l = list.size(); i < l; i++)
+		List<String> keys = new ArrayList<String>(checksums.keySet());
+		for (int i = 0, l = keys.size(); i < l; i++)
 		{
-			String file = list.get(i);
+			String file = keys.get(i);
 			Configuration config = getConf();
 			config.setInt(FastaSimpleJob.MAPREDUCE_LINERECORD_LENGTH, Integer.MAX_VALUE);
 			Job job = Job.getInstance(config, getClass().getSimpleName());
@@ -75,14 +81,14 @@ public class FastaAdvancedJob extends Configured implements Tool
 			job.setCombinerClass(FastaAdvReducer.class);
 			job.setReducerClass(FastaAdvReducer.class);
 			
-			job.setMapOutputKeyClass(IntWritable.class);
+			job.setMapOutputKeyClass(Text.class);
 			job.setMapOutputValueClass(Text.class);
 			
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			
 			
-			MultipleOutputs.addNamedOutput(job, "text" + i, TextOutputFormat.class, Text.class, Text.class);
+			MultipleOutputs.addNamedOutput(job, checksums.get(file), TextOutputFormat.class, Text.class, Text.class);
 			
 		    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
 		    FileOutputFormat.setOutputPath(job, new Path("OUTPUT" + i));

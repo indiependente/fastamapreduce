@@ -156,7 +156,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		
 		job.setJarByClass(FastaSimpleJob.class);
 		job.setMapperClass(FastaMapper.class);
-		job.setCombinerClass(FastaReducer.class);
+//		job.setCombinerClass(FastaReducer.class);
 		job.setReducerClass(FastaReducer.class);
 		
 		job.setNumReduceTasks(numOfReducer);
@@ -191,7 +191,6 @@ public class FastaSimpleJob extends Configured implements Tool
 			config.set(e.getValue(), e.getKey());
 			MultipleOutputs.addNamedOutput(job, e.getValue(), TextOutputFormat.class, Text.class, Text.class);
 		}
-
 		
 	    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
 	    FileOutputFormat.setOutputPath(job, new Path("OUTPUT"));

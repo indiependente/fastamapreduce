@@ -123,10 +123,13 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 			final Context finalContext = context;
 			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments,
 					new Runnable() {
-
+						private int lineCounter = 0;
+						private final static int LINE_UPDATE = 100;
 						@Override
 						public void run() {
-							finalContext.progress();
+							if (lineCounter % LINE_UPDATE == 0)
+								finalContext.progress();
+							lineCounter++;
 						}
 						
 					}

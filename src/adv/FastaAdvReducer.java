@@ -13,7 +13,7 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import simple.FastaReducer;
 
-public class FastaAdvReducer extends Reducer<IntWritable, Text, Text, Text> {
+public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 
 	private static Log LOG = LogFactory.getLog(FastaReducer.class);
 	
@@ -42,15 +42,7 @@ public class FastaAdvReducer extends Reducer<IntWritable, Text, Text, Text> {
 
 	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
-		StringBuilder res = new StringBuilder("");
-		Configuration cfg = context.getConfiguration();
-		String ref = cfg.get("" + key.get());
-		for (Text t : values)
-		{
-			res.append(t.toString());
-			res.append("\n\n");
-		}
-		out.write(new Text(ref), new Text(res.toString()), "text");
+		
 	}
 	
 	
