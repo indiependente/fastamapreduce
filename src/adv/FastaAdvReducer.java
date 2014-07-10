@@ -1,10 +1,14 @@
 package adv;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -18,7 +22,7 @@ public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 	private static Log LOG = LogFactory.getLog(FastaReducer.class);
 	
 	private MultipleOutputs<Text, Text> out;
-	
+	private FileSystem fs = null;
 	
 	
 	@Override
@@ -36,13 +40,31 @@ public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 			InterruptedException {
 		super.setup(context);
 		out = new MultipleOutputs<Text, Text>(context);
+		fs = FileSystem.get(context.getConfiguration());
 	}
 
 
 
 	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
+		Configuration cfg = context.getConfiguration();
+		String refName = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
+		String alignmentDir = FastaAdvancedJob.ALIGNMENTS_DIR + refName;
+		Path path = new Path(alignmentDir);
 		
+		{
+			FSDataOutputStream outStream = (!fs.exists(path)) ? fs.create(path, true) : fs.append(path);
+			
+			Iterator<Text> it = values.iterator();
+			while (it.hasNext())
+			{
+				it.next().write(outStream);
+			}
+			
+			outStream.close();
+		}
+		
+		out.write(new Text(refName), new Text(path.toString()), cfg.get(FastaAdvancedJob.TARGET_CHECKSUM));
 	}
 	
 	
