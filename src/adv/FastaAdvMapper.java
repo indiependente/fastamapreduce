@@ -14,7 +14,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -133,7 +132,7 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments, 
 				new Runnable() {
 					private int lineCounter = 0;
-					private final static int LINE_UPDATE = 100;
+					private final static int LINE_UPDATE = 1000;
 					@Override
 					public void run() {
 						if (lineCounter % LINE_UPDATE == 0)

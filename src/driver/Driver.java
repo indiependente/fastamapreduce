@@ -15,8 +15,8 @@ public class Driver {
 		{
 			ProgramDriver driver = new ProgramDriver();
 			
-			driver.addClass("simple", FastaSimpleJob.class, "shit");
-			driver.addClass("adv", FastaAdvancedJob.class, "moar shit");
+			driver.addClass("-s", FastaSimpleJob.class, "shit");
+			driver.addClass("-a", FastaAdvancedJob.class, "moar shit");
 
 			returnCode = driver.run(args);
 		}

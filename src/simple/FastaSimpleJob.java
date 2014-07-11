@@ -5,13 +5,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -19,22 +16,16 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.filecache.DistributedCache;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
-import driver.ConfigurationLoader;
 
 import utils.HdfsLoader;
 
@@ -44,6 +35,9 @@ public class FastaSimpleJob extends Configured implements Tool
 	public static final String FASTA_BIN_PATH = "./fasta36";
 	
 	public static final String MAPREDUCE_LINERECORD_LENGTH = "mapreduce.input.linerecordreader.line.maxlength";
+	
+	public static final String MAPREDUCE_LINE_PER_MAPPER_PROPERTY = "mapreduce.input.lineinputformat.linespermap";
+	public static final int MAPREDUCE_LINE_PER_MAPPER = 1;
 	
 	public static final String DELIMITER = "@@@";
 	public static String INPUT_NAME = "BIGFILE";
@@ -71,7 +65,10 @@ public class FastaSimpleJob extends Configured implements Tool
 				String fileNameX = "", fileNameY = ""; 
 				try 
 				{
-					fileContentX = FileUtils.readFileToString(listOfFiles[i]).replaceAll("\r", "").replaceAll("\n", CHAR_TO_REPLACE).trim();
+					fileContentX = FileUtils.readFileToString(listOfFiles[i])
+								.replaceAll("\r", "")
+								.replaceAll("\n", CHAR_TO_REPLACE)
+								.trim();
 					fileNameX = listOfFiles[i].getName();
 				} 
 				catch (IOException e)
@@ -192,8 +189,12 @@ public class FastaSimpleJob extends Configured implements Tool
 			MultipleOutputs.addNamedOutput(job, e.getValue(), TextOutputFormat.class, Text.class, Text.class);
 		}
 		
-	    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
+		job.setInputFormatClass(NLineInputFormat.class);
+		
+		NLineInputFormat.addInputPath(job, new Path(INPUT_NAME));
 	    FileOutputFormat.setOutputPath(job, new Path("OUTPUT"));
+	    
+	    config.setInt(MAPREDUCE_LINE_PER_MAPPER_PROPERTY, MAPREDUCE_LINE_PER_MAPPER);
 	    
 	    long startTime = System.currentTimeMillis();
 	    logger.info("starting job...");

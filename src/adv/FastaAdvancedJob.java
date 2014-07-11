@@ -1,23 +1,18 @@
 package adv;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -25,8 +20,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import simple.FastaMapper;
-import simple.FastaReducer;
 import simple.FastaSimpleJob;
 import utils.HdfsLoader;
 
@@ -40,9 +33,11 @@ public class FastaAdvancedJob extends Configured implements Tool
 	public static final String DELIMITATOR = "%";
 	public static String ALIGNMENTS_DIR = "ALIGNMENTS_";
 	
-	public static final String WORKING_FILE_NAME = "fastamr.working.file";
-	public static final String TARGET_CHECKSUM = "fastamr.working.md5";
-
+	public static final String WORKING_FILE_NAME = "fastamapreduce.working.file";
+	public static final String TARGET_CHECKSUM = "fastamapreduce.working.md5";
+	
+	public static final String MAPREDUCE_LINE_PER_MAPPER_PROPERTY = "mapreduce.input.lineinputformat.linespermap";
+	public static final int MAPREDUCE_LINE_PER_MAPPER = 1;
 	
 	public static String cleanOutputName(String s)
 	{
@@ -56,16 +51,21 @@ public class FastaAdvancedJob extends Configured implements Tool
 	{
 		GenericOptionsParser parser = new GenericOptionsParser(getConf(), args);
 		String[] argv = parser.getRemainingArgs();
-		
+		LOG.info("Starting....");
 		HdfsLoader loader = HdfsLoader.getInstance().setup(getConf());
 		String inputDir = argv[0];
-		
+		LOG.info("preparing input....");
 		Map<String, String> checksums = HDFSInputHelper.prepareInputFile(inputDir, INPUT_NAME, DELIMITATOR);
 		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
-				
+		LOG.info("input ready....");
+		
 		List<String> keys = new ArrayList<String>(checksums.keySet());
-		for (int i = 0, l = keys.size(); i < l; i++)
+		long totalTime = System.currentTimeMillis();
+		int numOfFiles = keys.size();
+		LOG.info("launching " + numOfFiles + " jobs....");
+		for (int i = 0; i < numOfFiles; i++)
 		{
+			LOG.info("launching job " + i + " ....");
 			String file = keys.get(i);
 			Configuration config = getConf();
 			config.setInt(FastaSimpleJob.MAPREDUCE_LINERECORD_LENGTH, Integer.MAX_VALUE);
@@ -98,10 +98,17 @@ public class FastaAdvancedJob extends Configured implements Tool
 			
 			MultipleOutputs.addNamedOutput(job, checksums.get(file), TextOutputFormat.class, Text.class, Text.class);
 			
-		    FileInputFormat.addInputPath(job, new Path(INPUT_NAME));
+			
+			job.setInputFormatClass(NLineInputFormat.class);
+			
+			NLineInputFormat.addInputPath(job, new Path(INPUT_NAME));
+			
 		    FileOutputFormat.setOutputPath(job, new Path(outputDir));
 		    
+		    config.setInt(MAPREDUCE_LINE_PER_MAPPER_PROPERTY, MAPREDUCE_LINE_PER_MAPPER);
+		    
 		    long startTime = System.currentTimeMillis();
+		    
 		    if (job.waitForCompletion(true))
 		    {
 		    	LOG.info("Job completed for file [" + file + "] in " + (System.currentTimeMillis() - startTime) + " ms");
@@ -112,6 +119,8 @@ public class FastaAdvancedJob extends Configured implements Tool
 		    }
 		}
 		
+    	LOG.info("All jobs(" + numOfFiles + ") completed in " + (System.currentTimeMillis() - totalTime) + " ms");
+
 		return 0;
 	}
 

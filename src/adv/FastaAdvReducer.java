@@ -12,7 +12,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import simple.FastaReducer;
@@ -45,12 +44,12 @@ public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 
 
 
-	public void reduce(IntWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
+	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
 		Configuration cfg = context.getConfiguration();
 		String refName = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		String alignmentDir = FastaAdvancedJob.ALIGNMENTS_DIR + refName;
-		Path path = new Path(alignmentDir);
+		Path path = new Path(alignmentDir + "/results");
 		
 		{
 			FSDataOutputStream outStream = (!fs.exists(path)) ? fs.create(path, true) : fs.append(path);
