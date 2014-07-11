@@ -3,6 +3,7 @@ package adv;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -43,14 +44,19 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		String fname = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		LOG.info("setup " + fname);
 		FileSystem fs = FileSystem.get(cfg);
-		path = "/home/hduser/Scrivania/" + FastaAdvancedJob.TARGET;
-		fs.copyToLocalFile(new Path(FastaAdvancedJob.TARGET), new Path(path));
+		//path = "/home/hduser/Scrivania/" + FastaAdvancedJob.TARGET;
+		
+		URI[] cachedFiles = context.getCacheFiles();
+		path = new Path(cachedFiles[0]).toString();
+		//fs.copyToLocalFile(new Path(FastaAdvancedJob.TARGET), new Path(path));
+		
 		fastaPath = "/home/hduser/Scrivania/fasta36";
-		String refContent = "";
-		refContent = FileUtils.readFileToString(new File(path)).replaceAll("\r", "");
+		String refContent = FileUtils.readFileToString(new File(path)).replaceAll("\r", "");
 		targetMd5 = HDFSInputHelper.md5(refContent);
+		
+		
 	}
-
+/*
 	@Override
 	protected void cleanup(Context context)
 			throws IOException, InterruptedException
@@ -58,7 +64,7 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		super.cleanup(context);
 		Files.delete(Paths.get(path));
 	}
-	
+*/	
 	public String writeToFile(String name, String body)
 	{
 		String ret = "";
@@ -99,7 +105,8 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		String line = "";
 		String md5 = "";
 		String tmpFile = "";
-		File ref = new File(path);
+		File ref = new File(path);	
+		
 		LOG.info("starting with " + fastaPath + "...");
 		try 
 		{

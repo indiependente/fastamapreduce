@@ -84,6 +84,8 @@ public class FastaAdvancedJob extends Configured implements Tool
 			loader.mkdir(alignDir);
 			loader.copyOnHdfs(inputDir + "/" + file, TARGET);
 			
+			job.addCacheFile(new Path(TARGET).toUri());
+			
 			job.setJarByClass(FastaAdvancedJob.class);
 			job.setMapperClass(FastaAdvMapper.class);
 //			job.setCombinerClass(FastaAdvReducer.class);
