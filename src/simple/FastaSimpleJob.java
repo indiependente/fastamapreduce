@@ -27,6 +27,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import utils.Defines;
 import utils.HdfsLoader;
 
 public class FastaSimpleJob extends Configured implements Tool 
@@ -147,7 +148,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		logger.info("selected # of reducers: " + numOfReducer);
 		
 		loader.copyOnHdfs(INPUT_NAME, INPUT_NAME);
-		loader.deleteFromHdfs("OUTPUT");
+		loader.deleteFromHdfs(Defines.OUTPUT);
 		loader.deleteFromHdfs(ALIGNMENTS_DIR);
 		loader.mkdir(ALIGNMENTS_DIR);
 		
@@ -157,20 +158,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		job.setReducerClass(FastaReducer.class);
 		
 		job.setNumReduceTasks(numOfReducer);
-		
-		// load fasta36 in distributed cache
-		
-		//job.addCacheFile(new Path("fasta36").toUri());
-		//job.createSymlink();
-		/*	
-		loader.deleteFromHdfs(FASTA_BIN_PATH);
-		loader.copyOnHdfs(FASTA_BIN_PATH, FASTA_BIN_PATH);
-		
-		DistributedCache.addCacheFile(new Path(FASTA_BIN_PATH).toUri(), job.getConfiguration());
-		DistributedCache.createSymlink(job.getConfiguration());
-	*/	
-		
-			
+	
 		// map <long, text> --> <long, text> 
 		// reduce <int, list(text)> --> <text, text>
 				
@@ -192,7 +180,7 @@ public class FastaSimpleJob extends Configured implements Tool
 		job.setInputFormatClass(NLineInputFormat.class);
 		
 		NLineInputFormat.addInputPath(job, new Path(INPUT_NAME));
-	    FileOutputFormat.setOutputPath(job, new Path("OUTPUT"));
+	    FileOutputFormat.setOutputPath(job, new Path(Defines.OUTPUT));
 	    
 	    config.setInt(MAPREDUCE_LINE_PER_MAPPER_PROPERTY, MAPREDUCE_LINE_PER_MAPPER);
 	    

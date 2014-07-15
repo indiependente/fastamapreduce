@@ -20,6 +20,8 @@ public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 
 	private static Log LOG = LogFactory.getLog(FastaReducer.class);
 	
+	private static final String RESULTS_NAME = "/results";
+	
 	private MultipleOutputs<Text, Text> out;
 	private FileSystem fs = null;
 	
@@ -49,7 +51,7 @@ public class FastaAdvReducer extends Reducer<Text, Text, Text, Text> {
 		Configuration cfg = context.getConfiguration();
 		String refName = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		String alignmentDir = FastaAdvancedJob.ALIGNMENTS_DIR + refName;
-		Path path = new Path(alignmentDir + "/results");
+		Path path = new Path(alignmentDir + RESULTS_NAME);
 		
 		{
 			FSDataOutputStream outStream = (!fs.exists(path)) ? fs.create(path, true) : fs.append(path);

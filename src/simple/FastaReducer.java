@@ -14,7 +14,7 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 public class FastaReducer extends Reducer<Text, Text, Text, Text> 
 {
-	private static Log logger = LogFactory.getLog(FastaReducer.class);
+	private static Log LOG = LogFactory.getLog(FastaReducer.class);
 	
 	private MultipleOutputs<Text, Text> out;
 	
@@ -60,7 +60,7 @@ public class FastaReducer extends Reducer<Text, Text, Text, Text>
 		String md5 = key.toString();
 		String ref = cfg.get(md5); // file name
 		// use create and write Text object there
-		Path path = new Path(FastaSimpleJob.ALIGNMENTS_DIR + "/" + ref);
+		Path path = new Path(String.format("%s/%s", FastaSimpleJob.ALIGNMENTS_DIR, ref));
 		FSDataOutputStream outStream = null;
 		if (!fs.exists(path))
 			outStream = fs.create(path, true);

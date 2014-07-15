@@ -22,15 +22,14 @@ import org.apache.hadoop.mapreduce.Mapper;
 import simple.FastaReducer;
 import simple.FastaSimpleJob;
 import utils.BinRunner;
+import utils.Defines;
 
 public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>  
 {
 	private static Log LOG = LogFactory.getLog(FastaReducer.class);
 	
 	private String path;
-	private static final String WORKING_DIR = "/home/hduser/Scrivania";
-
-
+	
 	private String fastaPath;
 	private String targetMd5;
 	
@@ -44,13 +43,11 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		String fname = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		LOG.info("setup " + fname);
 		FileSystem fs = FileSystem.get(cfg);
-		//path = "/home/hduser/Scrivania/" + FastaAdvancedJob.TARGET;
 		
 		URI[] cachedFiles = context.getCacheFiles();
 		path = new Path(cachedFiles[0]).toString();
-		//fs.copyToLocalFile(new Path(FastaAdvancedJob.TARGET), new Path(path));
 		
-		fastaPath = "/home/hduser/Scrivania/fasta36";
+		fastaPath = Defines.FASTA_PATH;
 		String refContent = FileUtils.readFileToString(new File(path)).replaceAll("\r", "");
 		targetMd5 = HDFSInputHelper.md5(refContent);
 		
@@ -65,31 +62,6 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		Files.delete(Paths.get(path));
 	}
 */	
-	public String writeToFile(String name, String body)
-	{
-		String ret = "";
-		PrintStream printer = null;
-		try 
-		{
-			File tmp = new File("/home/hduser/Scrivania/" + name + ".tmp");
-			printer = new PrintStream(tmp);
-			printer.print(body);
-			ret = tmp.getAbsolutePath();
-		} 
-		catch (IOException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		finally
-		{
-			if (printer != null)
-			{
-				printer.close();
-			}
-		}
-		return ret;
-	}
 	
 	public boolean checkForIdentity(String queryContent)
 	{
@@ -111,7 +83,10 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		try 
 		{
 			arguments.add(fastaPath);
-			arguments.add("-q");
+			
+			for (String s : Defines.FASTA_DEFAULT_OPTIONS)
+				arguments.add(s);
+			
 			arguments.add(ref.getAbsolutePath());
 			
 			line = value.toString();
@@ -130,16 +105,16 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 				return;
 			}
 			
-			tmpFile = writeToFile("query", line);
+			tmpFile = utils.Utils.writeToFile(Defines.QUERY_NAME, line);
 	
 			arguments.add(tmpFile);
 			
 			final Context finalContext = context;
 			
-			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments, 
+			absPath = BinRunner.execute(fastaPath, Defines.WORKING_DIR, arguments, 
 				new Runnable() {
 					private int lineCounter = 0;
-					private final static int LINE_UPDATE = 1000;
+					private final static int LINE_UPDATE = Defines.CONTEXT_UPDATE_TRIGGER;
 					@Override
 					public void run() {
 						if (lineCounter % LINE_UPDATE == 0)

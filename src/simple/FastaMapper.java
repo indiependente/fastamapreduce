@@ -16,14 +16,14 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import utils.BinRunner;
+import utils.Defines;
 
 
 
 public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>  
 {
-	private static final String WORKING_DIR = "/home/hduser/Scrivania";
 
-	private static Log logger = LogFactory.getLog(FastaMapper.class);
+	private static Log LOG = LogFactory.getLog(FastaMapper.class);
 	
 	private String fastaPath = ""; 
 	
@@ -32,14 +32,9 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException 
 	{
-		super.setup(context);
-		
+		super.setup(context);	
 		Configuration config = context.getConfiguration();
-//		FileSystem dfs = FileSystem.get(config);
-	    
-//		dfs.copyToLocalFile(new Path(FastaSimpleJob.FASTA_BIN_PATH), new Path(FastaSimpleJob.FASTA_BIN_PATH));
-//		fastaPath = new Path(FastaSimpleJob.FASTA_BIN_PATH).toString();
-		fastaPath = "/home/hduser/Scrivania/fasta36";
+		fastaPath = Defines.FASTA_PATH;
 		filesToDelete = new ArrayList<String>();
 	}
 	
@@ -57,35 +52,6 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 	}
 
 
-
-
-	public String writeToFile(String name, String body)
-	{
-		String ret = "";
-		PrintStream printer = null;
-		try 
-		{
-			File tmp = new File("/home/hduser/Scrivania/" + name + ".tmp");
-			printer = new PrintStream(tmp);
-			printer.print(body);
-			ret = tmp.getAbsolutePath();
-		} 
-		catch (IOException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		finally
-		{
-			if (printer != null)
-			{
-				printer.close();
-			}
-		}
-		return ret;
-	}
-
-
 	@Override
 	protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException 
 	{
@@ -94,7 +60,7 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 		String[] paths = new String[w.length];
 		String absPath = null;
 		
-		logger.info("starting mapper with " + fastaPath + "...");
+//		LOG.info("starting mapper with " + fastaPath + "...");
 		try 
 		{
 			arguments.add(fastaPath);
@@ -108,21 +74,21 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 			
 			if (w.length != 2)
 			{
-				logger.info("problems here");
+				LOG.info("problems here");
 				return;
 			}
 			
-			paths[0] = writeToFile("reference", w[0].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
-			paths[1] = writeToFile("query", w[1].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
+			paths[0] = utils.Utils.writeToFile(Defines.REF_NAME, w[0].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
+			paths[1] = utils.Utils.writeToFile(Defines.QUERY_NAME, w[1].replaceAll(FastaSimpleJob.CHAR_TO_REPLACE, "\n"));
 	
 			for (String s : paths)
 				arguments.add(s);
 			
 			final Context finalContext = context;
-			absPath = BinRunner.execute(fastaPath, WORKING_DIR, arguments,
+			absPath = BinRunner.execute(fastaPath, Defines.WORKING_DIR, arguments,
 					new Runnable() {
 						private int lineCounter = 0;
-						private final static int LINE_UPDATE = 1000;
+						private final static int LINE_UPDATE = Defines.CONTEXT_UPDATE_TRIGGER;
 						@Override
 						public void run() {
 							if (lineCounter % LINE_UPDATE == 0)
@@ -136,13 +102,13 @@ public class FastaMapper extends Mapper<LongWritable, Text, Text, Text>
 		}
 		catch (Exception e)
 		{
-			logger.info(e.getMessage());
+			LOG.info(e.getMessage());
 			e.printStackTrace();
 		}
 		
 		File absFile = new File(absPath);
 		if (!absFile.exists())
-			throw new FileNotFoundException("File not found: "+absFile.toString());
+			throw new FileNotFoundException("File not found: " + absFile.toString());
 		
 		String toWrite = new String(Files.readAllBytes(absFile.toPath()));
 		Text result = new Text(toWrite);
