@@ -65,7 +65,7 @@ public class FastaAdvancedJob extends Configured implements Tool
 		LOG.info("launching " + numOfFiles + " jobs....");
 		for (int i = 0; i < numOfFiles; i++)
 		{
-			LOG.info("launching job " + i + " ....");
+			LOG.info("launching job " + i + " of " + numOfFiles + " ....");
 			String file = keys.get(i);
 			Configuration config = getConf();
 			config.setInt(FastaSimpleJob.MAPREDUCE_LINERECORD_LENGTH, Integer.MAX_VALUE);
@@ -84,7 +84,7 @@ public class FastaAdvancedJob extends Configured implements Tool
 			loader.mkdir(alignDir);
 			loader.copyOnHdfs(inputDir + "/" + file, TARGET);
 			
-			job.addCacheFile(new Path(TARGET).toUri());
+//			job.addCacheFile(new Path(TARGET).toUri());
 			
 			job.setJarByClass(FastaAdvancedJob.class);
 			job.setMapperClass(FastaAdvMapper.class);
@@ -121,7 +121,8 @@ public class FastaAdvancedJob extends Configured implements Tool
 		    }
 		}
 		
-    	LOG.info("All jobs(" + numOfFiles + ") completed in " + (System.currentTimeMillis() - totalTime) + " ms");
+		loader.deleteFromHdfs(TARGET);
+    	LOG.info("All jobs[" + numOfFiles + "] completed in " + (System.currentTimeMillis() - totalTime) + " ms");
 
 		return 0;
 	}

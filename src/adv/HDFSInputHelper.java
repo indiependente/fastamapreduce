@@ -34,7 +34,6 @@ public class HDFSInputHelper {
 		
 		Map<String, String> ret = new HashMap<String, String>();
 		
-		
 		PrintWriter writer = null;
 		
 		try 

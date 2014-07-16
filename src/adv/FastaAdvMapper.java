@@ -43,17 +43,20 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		String fname = cfg.get(FastaAdvancedJob.WORKING_FILE_NAME);
 		LOG.info("setup " + fname);
 		FileSystem fs = FileSystem.get(cfg);
-		
+/*		
 		URI[] cachedFiles = context.getCacheFiles();
 		path = new Path(cachedFiles[0]).toString();
+*/
+		
+		path = Defines.WORKING_DIR + "/" + FastaAdvancedJob.TARGET;
+		fs.copyToLocalFile(new Path(FastaAdvancedJob.TARGET), new Path(path));
 		
 		fastaPath = Defines.FASTA_PATH;
 		String refContent = FileUtils.readFileToString(new File(path)).replaceAll("\r", "");
 		targetMd5 = HDFSInputHelper.md5(refContent);
 		
-		
 	}
-/*
+
 	@Override
 	protected void cleanup(Context context)
 			throws IOException, InterruptedException
@@ -61,7 +64,6 @@ public class FastaAdvMapper extends Mapper<LongWritable, Text, Text, Text>
 		super.cleanup(context);
 		Files.delete(Paths.get(path));
 	}
-*/	
 	
 	public boolean checkForIdentity(String queryContent)
 	{
